@@ -17,12 +17,21 @@ import android.widget.TableRow.LayoutParams;
 import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
+import android.widget.Button;
 import android.widget.Toast;
 
 public class MinesweeperGame extends Activity
 {
 	private TextView txtMineCount;
 	private TextView txtTimer;
+	private TextView Point1;
+	private TextView Point2;
+	private TextView Turn;
+	private TextView tit;
+	private Button b1;
+	private Button b2;
+
+	
 	private ImageButton btnSmile;
 
 	private TableLayout mineField; // table layout to add mines to
@@ -43,12 +52,53 @@ public class MinesweeperGame extends Activity
 	private boolean areMinesSet; // check if mines are planted in blocks
 	private boolean isGameOver;
 	private int minesToFind; // number of mines yet to be discovered
+	private int turn = 0;
+	private int P1 = 0;	
+	private int P2 = 0;
+	private int gametype = 0;
+	
+	
+	
 
 	@Override
 	public void onCreate(Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
+		tit = (TextView) findViewById(R.id.title);
+		b1 = (Button) findViewById(R.id.one);
+		b2 = (Button) findViewById(R.id.two);
+		b1.setOnClickListener(even1);
+		b2.setOnClickListener(even2);
+	}
+	
+	
+	
+    private OnClickListener even1 = new OnClickListener() {
+
+		public void onClick(View v) {
+			setgame1();
+			gametype=1;
+		}
+	 };
+	 
+	 
+	 private OnClickListener even2 = new OnClickListener() {
+
+		public void onClick(View v) {
+			setgame2();
+			gametype=2;
+		}
+	 };
+	
+	
+;
+	
+	
+	
+	public void setgame1()
+	{
+		setContentView(R.layout.game1);
 		
 		txtMineCount = (TextView) findViewById(R.id.MineCount);
 		txtTimer = (TextView) findViewById(R.id.Timer);
@@ -73,7 +123,56 @@ public class MinesweeperGame extends Activity
 		mineField = (TableLayout)findViewById(R.id.MineField);
 		
 		showDialog("Click smiley to start New Game", 2000, true, false);
+		
 	}
+	
+	
+	
+	
+	
+	public void setgame2()
+	{
+		setContentView(R.layout.game2);
+		txtMineCount = (TextView) findViewById(R.id.MineCount);
+		txtTimer = (TextView) findViewById(R.id.Timer);
+		Point1 = (TextView) findViewById(R.id.Point1);
+		Point2 = (TextView) findViewById(R.id.Point2);
+		Turn = (TextView) findViewById(R.id.Turn);
+		
+		
+		
+		
+		// set font style for timer and mine count to LCD style
+		Typeface lcdFont = Typeface.createFromAsset(getAssets(),
+				"fonts/lcd2mono.ttf");
+		txtMineCount.setTypeface(lcdFont);
+		txtTimer.setTypeface(lcdFont);
+		
+		btnSmile = (ImageButton) findViewById(R.id.Smiley);
+		btnSmile.setOnClickListener(new OnClickListener()
+		{
+			@Override
+			public void onClick(View view)
+			{
+				endExistingGame();
+				startNewGame();
+			}
+		});
+		
+		mineField = (TableLayout)findViewById(R.id.MineField);
+		
+		showDialog("Click smiley to start New Game", 2000, true, false);
+		
+	}
+
+	
+	
+	
+	
+	
+	
+	
+	
 
 	private void startNewGame()
 	{
@@ -85,6 +184,13 @@ public class MinesweeperGame extends Activity
 		minesToFind = totalNumberOfMines;
 		isGameOver = false;
 		secondsPassed = 0;
+		if(gametype==2)
+		{
+		Point1.setText("0");
+		Point2.setText("0");
+		Turn.setText("P1");
+		}
+		
 	}
 
 	private void showMineField()
@@ -185,13 +291,47 @@ public class MinesweeperGame extends Activity
 						{
 							// open nearby blocks till we get numbered blocks
 							rippleUncover(currentRow, currentColumn);
-							
-							// did we clicked a mine
-							if (blocks[currentRow][currentColumn].hasMine())
+
+							if (blocks[currentRow][currentColumn].hasMine() && gametype == 1)
 							{
 								// Oops, game over
 								finishGame(currentRow,currentColumn);
 							}
+							// did we clicked a mine
+							if (blocks[currentRow][currentColumn].hasMine() && gametype ==2)
+							{
+								if(turn==0 && blocks[currentRow][currentColumn].isCovered())
+								{
+									P1 = P1 + 1;
+									Point1.setText(Integer.toString(P1));
+									blocks[currentRow][currentColumn].OpenBlock();
+									
+
+								}
+								if(turn==1 && blocks[currentRow][currentColumn].isCovered())
+								{
+									P2 = P2 + 1;
+									Point2.setText(Integer.toString(P2));
+									blocks[currentRow][currentColumn].OpenBlock();
+								}
+								blocks[currentRow][currentColumn].setMineIcon(false);
+							}
+							
+							if(gametype==2)
+							{
+							switch(turn)
+							{
+							case 0:
+								turn=1;
+								Turn.setText("P2");
+								break;
+							case 1:
+								turn=0;
+								Turn.setText("P1");
+								break;
+							}
+							}
+							
 
 							// check if we win the game
 							if (checkGameWin())
@@ -199,6 +339,11 @@ public class MinesweeperGame extends Activity
 								// mark game as win
 								winGame();
 							}
+							
+
+
+							
+							
 						}
 					}
 				});
@@ -240,12 +385,50 @@ public class MinesweeperGame extends Activity
 											// open blocks till we get numbered block
 											rippleUncover(currentRow + previousRow, currentColumn + previousColumn);
 
-											// did we clicked a mine
-											if (blocks[currentRow + previousRow][currentColumn + previousColumn].hasMine())
+
+											if (blocks[currentRow][currentColumn].hasMine() && gametype == 1)
 											{
-												// oops game over
-												finishGame(currentRow + previousRow, currentColumn + previousColumn);
+												// Oops, game over
+												finishGame(currentRow,currentColumn);
 											}
+											
+											// did we clicked a mine
+											if (blocks[currentRow + previousRow][currentColumn + previousColumn].hasMine() && gametype == 2)
+											{
+												if(turn==0 && blocks[currentRow][currentColumn].isCovered())
+												{
+													P1 = P1 + 1;
+													Point1.setText(Integer.toString(P1));
+													blocks[currentRow][currentColumn].OpenBlock();													
+
+												}
+												if(turn==1 && blocks[currentRow][currentColumn].isCovered())
+												{
+													P2 = P2 + 1;
+													Point2.setText(Integer.toString(P2));
+													blocks[currentRow][currentColumn].OpenBlock();
+
+												}
+												blocks[currentRow][currentColumn].setMineIcon(false);
+
+											}
+											
+											if(gametype==2)
+											{
+											switch(turn)
+											{
+											case 0:
+												turn=1;
+												Turn.setText("P2");
+												break;
+											case 1:
+												turn=0;
+												Turn.setText("P1");
+												break;
+											}
+											}
+
+											
 
 											// did we win the game
 											if (checkGameWin())
@@ -253,6 +436,8 @@ public class MinesweeperGame extends Activity
 												// mark game as win
 												winGame();
 											}
+											
+
 										}
 									}
 								}
@@ -318,6 +503,53 @@ public class MinesweeperGame extends Activity
 			}
 		}
 	}
+	
+	
+	private void finishGame(int currentRow, int currentColumn)
+	{
+		isGameOver = true; // mark game as over
+		stopTimer(); // stop timer
+		isTimerStarted = false;
+		btnSmile.setBackgroundResource(R.drawable.sad);
+
+		// show all mines
+		// disable all blocks
+		for (int row = 1; row < numberOfRowsInMineField + 1; row++)
+		{
+			for (int column = 1; column < numberOfColumnsInMineField + 1; column++)
+			{
+				// disable block
+				blocks[row][column].setBlockAsDisabled(false);
+				
+				// block has mine and is not flagged
+				if (blocks[row][column].hasMine() && !blocks[row][column].isFlagged())
+				{
+					// set mine icon
+					blocks[row][column].setMineIcon(false);
+				}
+
+				// block is flagged and doesn't not have mine
+				if (!blocks[row][column].hasMine() && blocks[row][column].isFlagged())
+				{
+					// set flag icon
+					blocks[row][column].setFlagIcon(false);
+				}
+
+				// block is flagged
+				if (blocks[row][column].isFlagged())
+				{
+					// disable the block
+					blocks[row][column].setClickable(false);
+				}
+			}
+		}
+
+		// trigger mine
+		blocks[currentRow][currentColumn].triggerMine();
+
+		// show message
+		showDialog("You tried for " + Integer.toString(secondsPassed) + " seconds!", 1000, false, false);
+	}
 
 	private boolean checkGameWin()
 	{
@@ -382,54 +614,32 @@ public class MinesweeperGame extends Activity
 		}
 
 		// show message
-		showDialog("You won in " + Integer.toString(secondsPassed) + " seconds!", 1000, false, true);
-	}
-
-	private void finishGame(int currentRow, int currentColumn)
-	{
-		isGameOver = true; // mark game as over
-		stopTimer(); // stop timer
-		isTimerStarted = false;
-		btnSmile.setBackgroundResource(R.drawable.sad);
-
-		// show all mines
-		// disable all blocks
-		for (int row = 1; row < numberOfRowsInMineField + 1; row++)
+		if(gametype==1)
 		{
-			for (int column = 1; column < numberOfColumnsInMineField + 1; column++)
-			{
-				// disable block
-				blocks[row][column].setBlockAsDisabled(false);
-				
-				// block has mine and is not flagged
-				if (blocks[row][column].hasMine() && !blocks[row][column].isFlagged())
-				{
-					// set mine icon
-					blocks[row][column].setMineIcon(false);
-				}
-
-				// block is flagged and doesn't not have mine
-				if (!blocks[row][column].hasMine() && blocks[row][column].isFlagged())
-				{
-					// set flag icon
-					blocks[row][column].setFlagIcon(false);
-				}
-
-				// block is flagged
-				if (blocks[row][column].isFlagged())
-				{
-					// disable the block
-					blocks[row][column].setClickable(false);
-				}
-			}
+			showDialog("You won in " + Integer.toString(secondsPassed) + " seconds!", 1000, false, true);
 		}
+		
+		if(gametype==2)
+		{
+		if(P1>P2)
+		{
+		showDialog("P1 Win", 1000, false, true);
+		}
+		if(P2>P1)
+		{
+		showDialog("P2 Win", 1000, false, true);
+		}
+		if(P2==P1)
+		{
+		showDialog("No pne Win", 1000, false, true);
+		}
+		}
+		
+		
+		
 
-		// trigger mine
-		blocks[currentRow][currentColumn].triggerMine();
-
-		// show message
-		showDialog("You tried for " + Integer.toString(secondsPassed) + " seconds!", 1000, false, false);
 	}
+
 
 
 	private void setMines(int currentRow, int currentColumn)
